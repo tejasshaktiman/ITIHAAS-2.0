@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Interactive Login</title>
+    <!-- We will use Google Fonts for premium typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-glow: #ff9933; /* Saffron/Gold */
+            --secondary-glow: #ff007f; /* Neon Magenta */
+            --bg-color: #05050a;
+            --surface-color: rgba(15, 15, 25, 0.65);
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--text-main);
+        }
+
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: auto; /* Allow mouse interaction */
+        }
+
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+            perspective: 1000px;
+        }
+
+        .login-box {
+            position: relative;
+            background: var(--surface-color);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            /* Entrance Animation */
+            opacity: 0;
+            transform: translateY(50px) rotateX(10deg);
+            animation: formFloatIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes formFloatIn {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent, 
+                transparent, 
+                transparent, 
+                var(--primary-glow),
+                var(--secondary-glow)
+            );
+            animation: rotateGlow 4s linear infinite;
+            z-index: 0;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-box:hover::before {
+            opacity: 1;
+        }
+
+        .login-box::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: rgba(10, 10, 18, 0.95);
+            border-radius: 18px;
+            z-index: 1;
+            backdrop-filter: blur(20px);
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInRight 0.8s ease forwards;
+        }
+
+        .input-group:nth-child(2) { animation-delay: 0.2s; }
+        .input-group:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 0;
+            font-size: 1rem;
+            color: var(--text-main);
+            border: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            outline: none;
+            background: transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group label {
+            position: absolute;
+            top: 12px;
+            left: 0;
+            font-size: 1rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: 0.3s ease all;
+        }
+
+        /* Floating label effect */
+        .input-group input:focus ~ label,
+        .input-group input:valid ~ label {
+            top: -12px;
+            font-size: 0.75rem;
+            color: var(--primary-glow);
+        }
+
+        /* Animated bottom border on focus */
+        .input-group .bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            transition: width 0.3s ease;
+        }
+
+        .input-group input:focus ~ .bar {
+            width: 100%;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.8s ease 0.6s forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Button hover effects */
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, var(--secondary-glow), var(--primary-glow));
+            z-index: -1;
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 0, 127, 0.4), 0 0 40px rgba(255, 153, 51, 0.4);
+        }
+
+        .submit-btn:hover::before {
+            opacity: 1;
+        }
+
+        /* Ripple effect inside button */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-anim 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        @keyframes ripple-anim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Extra small link styling */
+        .extra-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            opacity: 0;
+            animation: slideUp 0.8s ease 0.8s forwards;
+        }
+
+        .extra-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .extra-links a:hover {
+            color: var(--primary-glow);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Animation Canvas -->
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <div class="login-content">
+                <div class="login-header">
+                    <h2>Welcome Back</h2>
+                    <p>Enter your credentials to continue</p>
+                </div>
+                
+                <form id="loginForm" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <input type="text" id="username" required autocomplete="off">
+                        <label for="username">Username</label>
+                        <div class="bar"></div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="password" id="password" required>
+                        <label for="password">Password</label>
+                        <div class="bar"></div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span>Authenticate</span>
+                    </button>
+                    
+                    <div class="extra-links">
+                        <a href="#">Forgot Password?</a>
+                        <a href="#">Create Account</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to window size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Mouse interaction state
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 150 // Area of effect for mouse interaction
+        };
+
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        window.addEventListener('mouseout', function() {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                // Random velocity
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                // Size
+                this.size = Math.random() * 2 + 1;
+                // Colors - mixing gold and magenta for that epic vibe
+                const colors = ['#ff9933', '#ff007f', '#a855f7', '#ffffff'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // Add glow to particles
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+            }
+
+            update() {
+                // Check mouse collision/interaction
+                if (mouse.x != null && mouse.y != null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    let forceDirectionX = dx / distance;
+                    let forceDirectionY = dy / distance;
+                    let maxDistance = mouse.radius;
+                    let force = (maxDistance - distance) / maxDistance;
+                    let directionX = forceDirectionX * force * this.density;
+                    let directionY = forceDirectionY * force * this.density;
+
+                    // Push particles away softly or pull them in depending on vibe
+                    // Let's create a subtle gravity pull towards the mouse, then scatter
+                    if (distance < mouse.radius) {
+                        this.x -= directionX;
+                        this.y -= directionY;
+                    } else {
+                        // Return to normal movement
+                        if (this.x !== this.baseX) {
+                            let dx = this.x - this.baseX;
+                            this.x -= dx / 50; // Slowly return
+                        }
+                        if (this.y !== this.baseY) {
+                            let dy = this.y - this.baseY;
+                            this.y -= dy / 50;
+                        }
+                    }
+                }
+
+                // Normal roaming movement
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Update base position slowly so they drift over time
+                this.baseX += this.vx;
+                this.baseY += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+            }
+        }
+
+        let particlesArray = [];
+        
+        function initParticles() {
+            particlesArray = [];
+            // Number of particles depends on screen size to maintain performance
+            let numberOfParticles = (canvas.width * canvas.height) / 10000;
+            // Cap it so it doesn't melt the GPU
+            if(numberOfParticles > 200) numberOfParticles = 200;
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function connectParticles() {
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = dx * dx + dy * dy;
+
+                    // If particles are close, draw a line between them
+                    if (distance < (canvas.width / 10) * (canvas.height / 10)) {
+                        let opacityValue = 1 - (distance / 15000);
+                        ctx.strokeStyle = `rgba(255, 153, 51, ${opacityValue * 0.3})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            // Clear canvas with a slight trail effect
+            ctx.fillStyle = 'rgba(5, 5, 10, 0.2)'; // creates trailing effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Turn off shadow blur for connections to save performance
+            ctx.shadowBlur = 0; 
+            connectParticles();
+            
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        initParticles();
+        animate();
+
+        const submitBtn = document.getElementById('submitBtn');
+        
+        submitBtn.addEventListener('click', function (e) {
+            // Create Ripple
+            const circle = document.createElement('span');
+            const diameter = Math.max(this.clientWidth, this.clientHeight);
+            const radius = diameter / 2;
+
+            const rect = this.getBoundingClientRect();
+            
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${e.clientX - rect.left - radius}px`;
+            circle.style.top = `${e.clientY - rect.top - radius}px`;
+            circle.classList.add('ripple');
+
+            const ripple = this.querySelector('.ripple');
+            if (ripple) {
+                ripple.remove();
+            }
+
+            this.appendChild(circle);
+
+            // Mock submission state change
+            const originalText = this.querySelector('span').innerText;
+            const span = this.querySelector('span');
+            
+            // Check if form is valid before doing the animation
+            const form = document.getElementById('loginForm');
+            if(form.checkValidity()) {
+                span.innerText = "Authenticating...";
+                this.style.opacity = "0.8";
+                
+                // Reset after mock delay
+                setTimeout(() => {
+                    span.innerText = "Success!";
+                    this.style.background = "linear-gradient(45deg, #00c6ff, #0072ff)";
+                    
+                    setTimeout(() => {
+                        span.innerText = originalText;
+                        this.style.background = ""; // Reset to CSS class
+                        this.style.opacity = "1";
+                    }, 2000);
+                }, 1500);
+            }
+        });
+
+    </script>
+</body>
+</html>
